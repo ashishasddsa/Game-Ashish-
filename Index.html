@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+      text-align: center;
+    }
+    .screen {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .active {
+      display: flex;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      background: #ff0099;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #ff4db2;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 8px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 60px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 15px;
+      background: #220033;
+      transition: transform 0.3s;
+    }
+    .cell:hover {
+      transform: scale(1.1);
+    }
+    .x {
+      color: #ff00ff;
+      text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+    }
+    .o {
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    }
+    .message {
+      margin-top: 20px;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    /* 🎉 Animations */
+    .win {
+      animation: winGlow 1s infinite alternate;
+    }
+    .lose {
+      animation: loseShake 0.4s infinite;
+    }
+    .draw {
+      animation: drawPulse 1s infinite alternate;
+    }
+
+    @keyframes winGlow {
+      from { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; color: #00ff00; }
+      to { text-shadow: 0 0 25px #00ff00, 0 0 40px #00ff00; color: #00ff88; }
+    }
+    @keyframes loseShake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-8px); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes drawPulse {
+      from { text-shadow: 0 0 10px yellow, 0 0 20px yellow; color: yellow; }
+      to { text-shadow: 0 0 25px orange, 0 0 40px orange; color: orange; }
+    }
+
+    select {
+      padding: 8px;
+      margin-top: 15px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    /* 🔗 Social Media CSS */
+    .social {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .social img {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .social img:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <!-- Home Screen -->
+  <div id="home" class="screen active">
+    <h1>Tic Tac Toe</h1>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game" class="screen">
+    <div class="board" id="board"></div>
+    <div class="message" id="message"></div>
+
+    <p>Select Difficulty</p>
+    <select id="difficulty" onchange="changeDifficulty()">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+
+    <button onclick="restart()">Play Again</button>
+
+    <!-- 🔗 Social Media Links -->
+    <div class="social">
+      <a href="https://t.me/+b7EPlrZ9nCU3OGNl" target="_blank">
+        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram">
+      </a>
+      <a href="https://m.youtube.com/channel/UCT9k32Hk_dl3hVCt4uYCGDg" target="_blank">
+        <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube">
+      </a>
+      <a href="https://www.instagram.com/ashish_kushwaha444/" target="_blank">
+        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+      </a>
+    </div>
+  </div>
+
+  <script>
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let human = "O", ai = "X";
+    let gameActive = true;
+    let difficulty = "easy";
+
+    function startGame() {
+      document.getElementById("home").classList.remove("active");
+      document.getElementById("game").classList.add("active");
+      renderBoard();
+    }
+
+    function changeDifficulty() {
+      difficulty = document.getElementById("difficulty").value;
+    }
+
+    function renderBoard() {
+      const boardDiv = document.getElementById("board");
+      boardDiv.innerHTML = "";
+      board.forEach((cell, i) => {
+        const div = document.createElement("div");
+        div.classList.add("cell");
+        if (cell === "X") div.classList.add("x");
+        if (cell === "O") div.classList.add("o");
+        div.innerText = cell;
+        div.onclick = () => makeMove(i);
+        boardDiv.appendChild(div);
+      });
+    }
+
+    function makeMove(i) {
+      if (!gameActive || board[i] !== "") return;
+      board[i] = human;
+      renderBoard();
+      if (checkWinner(board, human)) {
+        endGame("🎉 You Win!", "win");
+        return;
+      }
+      if (isDraw()) {
+        endGame("😐 It's a Draw!", "draw");
+        return;
+      }
+      setTimeout(aiMove, 500);
+    }
+
+    function aiMove() {
+      let move;
+      if (difficulty === "easy") move = randomMove();
+      else if (difficulty === "medium") move = mediumMove();
+      else move = bestMove();
+
+      if (move !== undefined) board[move] = ai;
+      renderBoard();
+      if (checkWinner(board, ai)) {
+        endGame("🤖 Robot Wins!", "lose");
+        return;
+      }
+      if (isDraw()) {
+        endGame("😐 It's a Draw!", "draw");
+      }
+    }
+
+    // EASY
+    function randomMove() {
+      let available = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    // MEDIUM
+    function mediumMove() {
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+          board[i] = ai;
+          if (checkWinner(board, ai)) { board[i] = ""; return i; }
+          board[i] = "";
+        }
+      }
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+          board[i] = human;
+          if (checkWinner(board, human)) { board[i] = ""; return i; }
+          board[i] = "";
+        }
+      }
+      return randomMove();
+    }
+
+    // HARD
+    function bestMove() {
+      let bestScore = -Infinity;
+      let move;
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+          board[i] = ai;
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+      return move;
+    }
+
+    function minimax(boardState, depth, isMaximizing) {
+      if (checkWinner(boardState, ai)) return 10 - depth;
+      if (checkWinner(boardState, human)) return depth - 10;
+      if (boardState.every(cell => cell !== "")) return 0;
+
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (boardState[i] === "") {
+            boardState[i] = ai;
+            let score = minimax(boardState, depth + 1, false);
+            boardState[i] = "";
+            bestScore = Math.max(score, bestScore);
+          }
+        }
+        return bestScore;
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (boardState[i] === "") {
+            boardState[i] = human;
+            let score = minimax(boardState, depth + 1, true);
+            boardState[i] = "";
+            bestScore = Math.min(score, bestScore);
+          }
+        }
+        return bestScore;
+      }
+    }
+
+    function checkWinner(b, player) {
+      const wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return wins.some(combo => combo.every(index => b[index] === player));
+    }
+
+    function isDraw() {
+      return board.every(cell => cell !== "");
+    }
+
+    function endGame(msg, type) {
+      gameActive = false;
+      const msgDiv = document.getElementById("message");
+      msgDiv.innerText = msg;
+      msgDiv.className = "message " + type;
+    }
+
+    function restart() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      gameActive = true;
+      const msgDiv = document.getElementById("message");
+      msgDiv.innerText = "";
+      msgDiv.className = "message";
+      renderBoard();
+    }
+  </script>
+</body>
+</html>
